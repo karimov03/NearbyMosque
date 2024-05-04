@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1.5">
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_margin="10dp"
+            app:cardCornerRadius="30dp"
+            android:elevation="10dp">
+            <ImageView
+                android:id="@+id/image_mosque"
+                android:layout_width="match_parent"
+                android:layout_margin="20dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/ic_go"/>
+        </androidx.cardview.widget.CardView>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:layout_weight="1">
+
+        <TextView
+            android:id="@+id/tv_mosque_name"
+            android:layout_width="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="200dp"
+            android:text="Kushki Turkon jome masjidi"
+            android:textColor="#233D6E"
+            android:fontFamily="@font/bold_3"
+            android:textSize="24sp"/>
+        <TextView
+            android:id="@+id/tv_mosque_location"
+            android:layout_width="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="100dp"
+            android:text="Kushki Turkon jome masjidi"
+            android:textColor="#233D6E"
+            android:textSize="14sp"
+            android:fontFamily="@font/medium"/>
+        <TextView
+            android:id="@+id/tv_bool"
+            android:layout_width="match_parent"
+            android:layout_marginStart="10dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="200dp"
+            android:layout_marginTop="10dp"
+            android:text="Ochiq"
+            android:textColor="#76FF03"
+            android:gravity="start"
+            android:textSize="14sp"
+            android:fontFamily="@font/black"/>
+    </LinearLayout>
+</LinearLayout>

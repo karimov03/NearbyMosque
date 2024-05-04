@@ -1,0 +1,14 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.NearbyMosque" parent="Theme.Material3.Light.NoActionBar">
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarDividerColor" tools:targetApi="o_mr1">@color/white</item>
+    </style>
+    <style name="Theme.NearbyMosque" parent="Base.Theme.NearbyMosque"/>
+    <style name="Custom.Indicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">#0047B6E8</item>
+
+    </style>
+
+</resources>
