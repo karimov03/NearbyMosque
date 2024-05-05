@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="120dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:gravity="center"
         android:layout_weight="1.5">
 
         <androidx.cardview.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="140dp"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
             android:layout_margin="10dp"
             app:cardCornerRadius="30dp"
             android:elevation="10dp">
@@ -26,20 +27,22 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
+        android:gravity="center"
         android:layout_weight="1">
 
         <TextView
             android:id="@+id/tv_mosque_name"
-            android:layout_width="match_parent"
+            android:layout_width="200dp"
+            android:gravity="center"
             android:layout_marginStart="10dp"
             android:layout_marginTop="10dp"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:maxHeight="200dp"
+            android:layout_height="wrap_content"
+            android:maxHeight="100dp"
             android:text="Kushki Turkon jome masjidi"
             android:textColor="#233D6E"
             android:fontFamily="@font/bold_3"
-            android:textSize="24sp"/>
+            android:textSize="18sp"/>
 
     </LinearLayout>
+
 </LinearLayout>

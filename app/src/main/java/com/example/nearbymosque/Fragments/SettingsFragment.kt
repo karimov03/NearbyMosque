@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import com.example.nearbymosque.Object.Cancel
 import com.example.nearbymosque.R
 import com.example.nearbymosque.databinding.FragmentNotificationBinding
 import com.example.nearbymosque.databinding.FragmentSettingsBinding

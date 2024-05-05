@@ -7,6 +7,13 @@
     android:background="#FFFFFF"
     tools:context=".Fragments.SettingsFragment">
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:text="Ilova TATU Farg'ona \nfiliali talabasi tomonidan\n ishlan chiqarildi"
+        android:fontFamily="@font/black"/>
 
 
 

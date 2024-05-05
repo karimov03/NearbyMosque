@@ -9,18 +9,18 @@
 
     <item
         android:id="@+id/nav_map"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/ic_map"
         android:iconTintMode="screen"
         tools:ignore="MenuTitle" />
 
     <item
         android:id="@+id/nav_notifications"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/ic_book"
         android:iconTintMode="screen"
         tools:ignore="MenuTitle" />
     <item
         android:id="@+id/nav_settings"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/ic_about"
         android:iconTintMode="screen"
         tools:ignore="MenuTitle" />
 </menu>

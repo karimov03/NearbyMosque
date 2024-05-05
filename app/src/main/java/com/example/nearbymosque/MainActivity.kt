@@ -2,6 +2,7 @@ package com.example.nearbymosque
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
@@ -11,6 +12,7 @@ import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.SearchView
@@ -18,6 +20,7 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.SortedList
@@ -50,6 +53,7 @@ import com.google.android.libraries.places.api.model.TypeFilter
 import com.google.android.libraries.places.api.net.FetchPlaceRequest
 import com.google.android.libraries.places.api.net.FindAutocompletePredictionsRequest
 import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.material.snackbar.Snackbar
 import com.karimov03.customsearchmap.Classs.PlaceData
 import com.squareup.okhttp.OkHttpClient
 import com.squareup.okhttp.Request
@@ -68,6 +72,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var runnable: Runnable
     private lateinit var mosqueLocation: LatLng
     private lateinit var map: GoogleMap
+    private var doubleBackPressed=false
     private lateinit var sortedList: ArrayList<PlaceData>
     private val markerList = mutableListOf<Marker>()
     private lateinit var placeDataAdapter: PlaceDataAdapter
@@ -88,160 +93,166 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            val window = window
-            window.statusBarColor = Color.TRANSPARENT
-            window.navigationBarColor = Color.TRANSPARENT
-            window.decorView.systemUiVisibility =
-                View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR or
-                        View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
-                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
-                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-        }
-
-
-        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
-
+        requestLocationPermissions()
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                val window = window
+                window.statusBarColor = Color.TRANSPARENT
+                window.navigationBarColor = Color.TRANSPARENT
+                window.decorView.systemUiVisibility =
+                    View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR or
+                            View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            }
+            runnable = Runnable {
+            }
+            fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
 //        navHost
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.my_navigation_host) as NavHostFragment
-        val navController = navHostFragment.navController
+            val navHostFragment =
+                supportFragmentManager.findFragmentById(R.id.my_navigation_host) as NavHostFragment
+            val navController = navHostFragment.navController
 //        Map
-        val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        Places.initialize(applicationContext, getString(R.string.app_key))
-        placesClient = Places.createClient(this)
-        token = AutocompleteSessionToken.newInstance()
+            val mapFragment =
+                supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
+            mapFragment.getMapAsync(this)
+            fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+            Places.initialize(applicationContext, getString(R.string.app_key))
+            placesClient = Places.createClient(this)
+            token = AutocompleteSessionToken.newInstance()
 
-        placeClient = Places.createClient(this)
+            placeClient = Places.createClient(this)
 
-        locationRequest = LocationRequest.create().apply {
-            interval = 1000
-            fastestInterval = 1000
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
+            locationRequest = LocationRequest.create().apply {
+                interval = 1000
+                fastestInterval = 1000
+                priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+            }
 
-        binding.bottomNavigation.setOnNavigationItemSelectedListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.nav_home -> {
+            sortedList = ArrayList()
+            binding.bottomNavigation.setOnNavigationItemSelectedListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.nav_home -> {
 //
-                    binding.homePage.visibility = View.VISIBLE
-                    binding.nav.visibility = View.GONE
-                    true
+                        binding.homePage.visibility = View.VISIBLE
+                        binding.nav.visibility = View.GONE
+                        true
+                    }
+
+                    R.id.nav_map -> {
+                        binding.nav.visibility = View.GONE
+                        binding.homePage.visibility = View.GONE
+                        true
+                    }
+
+                    R.id.nav_notifications -> {
+                        navController.navigate(R.id.notificationFragment)
+                        binding.nav.visibility = View.VISIBLE
+                        binding.homePage.visibility = View.GONE
+
+                        true
+                    }
+
+                    R.id.nav_settings -> {
+                        navController.navigate(R.id.settingsFragment)
+                        binding.nav.visibility = View.VISIBLE
+                        binding.homePage.visibility = View.GONE
+
+                        true
+                    }
+
+                    else -> false
                 }
-
-                R.id.nav_map -> {
-                    binding.nav.visibility = View.GONE
-                    binding.homePage.visibility = View.GONE
-                    true
-                }
-
-                R.id.nav_notifications -> {
-                    navController.navigate(R.id.notificationFragment)
-                    binding.nav.visibility = View.VISIBLE
-                    binding.homePage.visibility = View.GONE
-
-                    true
-                }
-
-                R.id.nav_settings -> {
-                    navController.navigate(R.id.settingsFragment)
-                    binding.nav.visibility = View.VISIBLE
-                    binding.homePage.visibility = View.GONE
-
-                    true
-                }
-
-                else -> false
             }
-        }
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            searchNearbyPlaces()
-        }
-        binding.btnGeoder.setOnClickListener {
-            try {
-                chekedMosque = false
-                binding.btnLive.backgroundTintList =
-                    ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
+            binding.swipeRefreshLayout.setOnRefreshListener {
+                binding.enable.visibility=View.VISIBLE
+                searchNearbyPlaces()
+            }
+            binding.btnGeoder.setOnClickListener {
+                try {
+                    chekedMosque = false
+                    binding.btnLive.backgroundTintList =
+                        ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
 
-                if (ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        this,
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    // TODO: Consider calling
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-                    return@setOnClickListener
-                }
-                fusedLocationClient.lastLocation.addOnSuccessListener { location ->
-                    myLocation = LatLng(location.latitude, location.longitude)
-                    map.moveCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                            LatLng(
-                                location.latitude,
-                                location.longitude
-                            ), 12f
+                    if (ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                            this,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        ) != PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // TODO: Consider calling
+                        //    ActivityCompat#requestPermissions
+                        // here to request the missing permissions, and then overriding
+                        //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                        //                                          int[] grantResults)
+                        // to handle the case where the user grants the permission. See the documentation
+                        // for ActivityCompat#requestPermissions for more details.
+                        return@setOnClickListener
+                    }
+                    fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+                        myLocation = LatLng(location.latitude, location.longitude)
+                        map.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    location.latitude,
+                                    location.longitude
+                                ), 12f
+                            )
                         )
-                    )
+                    }
+                    binding.bottomNavigation.selectedItemId = R.id.nav_map
+                } catch (e: Exception) {
                 }
-                binding.bottomNavigation.selectedItemId = R.id.nav_map
-            } catch (e: Exception) {
             }
-        }
-        binding.btnLive.setOnClickListener {
-            if (chekedMosque == false) {
-                chekedMosque = true
-                binding.btnLive.backgroundTintList =
-                    ColorStateList.valueOf(ContextCompat.getColor(this, R.color.green))
-            } else {
-                chekedMosque = false
-                binding.btnLive.backgroundTintList =
-                    ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
-
-            }
-        }
-        binding.enable.visibility = View.VISIBLE
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String): Boolean {
-                return true
-            }
-
-            override fun onQueryTextChange(newText: String): Boolean {
-                if (newText.isNullOrEmpty()) {
-                    placeDataAdapter =
-                        PlaceDataAdapter(
-                            this@MainActivity,
-                            sortedList,
-                            object : PlaceDataAdapter.RvAction {
-                                @SuppressLint("MissingPermission")
-                                override fun onClick(
-                                    list: ArrayList<PlaceData>,
-                                    position: Int
-                                ) {
-//                                  masjid tanlandi
-                                    mosqueChecked(list, position)
-
-
-                                }
-                            })
-                    binding.rv.adapter = placeDataAdapter
-
+            binding.btnLive.setOnClickListener {
+                if (chekedMosque == false) {
+                    chekedMosque = true
+                    binding.btnLive.backgroundTintList =
+                        ColorStateList.valueOf(ContextCompat.getColor(this, R.color.green))
                 } else {
+                    chekedMosque = false
+                    binding.btnLive.backgroundTintList =
+                        ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white))
 
-                    searchMosquesByNameInUzbekistan(newText)
                 }
-                return true
             }
-        })
+            binding.enable.visibility = View.VISIBLE
+            binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                override fun onQueryTextSubmit(query: String): Boolean {
+                    return true
+                }
+
+                override fun onQueryTextChange(newText: String): Boolean {
+                    if (newText.isNullOrEmpty()) {
+                        placeDataAdapter =
+                            PlaceDataAdapter(
+                                this@MainActivity,
+                                sortedList,
+                                object : PlaceDataAdapter.RvAction {
+                                    @RequiresApi(Build.VERSION_CODES.Q)
+                                    @SuppressLint("MissingPermission")
+                                    override fun onClick(
+                                        list: ArrayList<PlaceData>,
+                                        position: Int
+                                    ) {
+//                                  masjid tanlandi
+                                        mosqueChecked(list, position)
+
+
+                                    }
+                                })
+                        binding.rv.adapter = placeDataAdapter
+
+                    } else {
+
+                        searchMosquesByNameInUzbekistan(newText)
+                    }
+                    return true
+                }
+            })
+        }catch (e:Exception){}
 
     }
 
@@ -374,6 +385,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             // for ActivityCompat#requestPermissions for more details.
             return
         }
+        if (ContextCompat.checkSelfPermission(this
+                , Manifest.permission.ACCESS_FINE_LOCATION)
+            == PackageManager.PERMISSION_GRANTED) {
+
+
+
         map.isMyLocationEnabled = false
         map.isTrafficEnabled = true
         map.uiSettings.isMyLocationButtonEnabled = false
@@ -383,7 +400,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             locationCallback,
             Looper.getMainLooper()
         )
-        searchNearbyPlaces()
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             myLocation = LatLng(location.latitude, location.longitude)
             map.moveCamera(
@@ -395,9 +411,12 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 )
             )
         }
+        } else {
+            requestLocationPermissions()
+        }
     }
 
-    @SuppressLint("MissingPermission", "NewApi")
+    @RequiresApi(Build.VERSION_CODES.Q)
     private fun mosqueChecked(list: java.util.ArrayList<PlaceData>, position: Int) {
         binding.bottomNavigation.selectedItemId = R.id.nav_map
         val mosque = list[position]
@@ -407,6 +426,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             ColorStateList.valueOf(ContextCompat.getColor(this, R.color.green))
 
         removeAllMarkers()
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             myLocation = LatLng(location.latitude, location.longitude)
         }
@@ -477,11 +513,18 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-            // Request location permissions if not granted
-            requestLocationPermissions()
             return
         }
+        try {
 
+            map.isMyLocationEnabled = false
+            map.isTrafficEnabled = true
+            map.uiSettings.isMyLocationButtonEnabled = false
+            map.uiSettings.isCompassEnabled = false
+        }catch (e:Exception){}
+        fusedLocationClient.lastLocation.addOnSuccessListener { location ->
+            myLocation = LatLng(location.latitude, location.longitude)
+            }
         // Get the last known location
         fusedLocationClient.lastLocation.addOnSuccessListener { location ->
             location?.let {
@@ -514,7 +557,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                         )
                                         place.destination = String.format("%.2f", distance)
                                     }
-
+                                    fusedLocationProviderClient.requestLocationUpdates(
+                                        locationRequest,
+                                        locationCallback,
+                                        Looper.getMainLooper()
+                                    )
 
                                     runOnUiThread {
 
@@ -529,6 +576,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                                                 this@MainActivity,
                                                 sortedList,
                                                 object : PlaceDataAdapter.RvAction {
+                                                    @RequiresApi(Build.VERSION_CODES.Q)
                                                     @SuppressLint("MissingPermission")
                                                     override fun onClick(
                                                         list: ArrayList<PlaceData>,
@@ -585,10 +633,10 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                         var dis = getDirectionsLength(myLocation, destin,
                             getString(R.string.app_key)
                         )
-                        string = (dis * 1000).toInt().toString() + "m"
+                        string = (dis * 1000).toInt().toString() + " m"
                         if ((dis * 1000).toInt() > 1000) {
                             dis=String.format("%.2f", dis).toFloat()
-                            string = dis.toString() + "km"
+                            string = dis.toString() + " km"
                         }
 
                         runOnUiThread {
@@ -637,19 +685,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         }
         if (chekedMosque) {
             val cameraPosition20 =
-                CameraPosition.Builder().target(latLng).zoom(18f).bearing(location.bearing).build()
+                CameraPosition.Builder().target(latLng).zoom(18.2f).bearing(location.bearing).build()
             val cameraPosition40 =
-                CameraPosition.Builder().target(latLng).zoom(17f).bearing(location.bearing).build()
+                CameraPosition.Builder().target(latLng).zoom(18.5f).bearing(location.bearing).build()
             val cameraPosition60 =
-                CameraPosition.Builder().target(latLng).zoom(16.5f).bearing(location.bearing)
+                CameraPosition.Builder().target(latLng).zoom(18f).bearing(location.bearing)
                     .build()
             val cameraPosition80 =
-                CameraPosition.Builder().target(latLng).zoom(16f).bearing(location.bearing).build()
+                CameraPosition.Builder().target(latLng).zoom(17.5f).bearing(location.bearing).build()
             val cameraPosition100 =
-                CameraPosition.Builder().target(latLng).zoom(15.5f).bearing(location.bearing)
+                CameraPosition.Builder().target(latLng).zoom(17f).bearing(location.bearing)
                     .build()
             val cameraPosition200 =
-                CameraPosition.Builder().target(latLng).zoom(15f).bearing(location.bearing).build()
+                CameraPosition.Builder().target(latLng).zoom(16f).bearing(location.bearing).build()
 //            speed setting
             val speed = speedMeter(location)
             binding.tvSpeed.text = speed.toString()
@@ -657,11 +705,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition20))
             } else if (speed <= 40) {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition40))
-            } else if (speed <= 60) {
+            } else if (speed <= 65) {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition60))
-            } else if (speed <= 80) {
+            } else if (speed <= 85) {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition80))
-            } else if (speed <= 100) {
+            } else if (speed <= 140) {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition100))
             } else {
                 map.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition200))
@@ -840,15 +888,36 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun requestLocationPermissions() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ),
-            REQUEST_LOCATION_PERMISSION
-        )
+        requestPermissions(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_LOCATION_PERMISSION)
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+              searchNearbyPlaces()
+            } else {
+                showLocationPermissionSnackbar()
+
+            }
+        }
+    }
+    private fun showLocationPermissionSnackbar() {
+        Snackbar.make(
+            findViewById(android.R.id.content), // Aktivitidagi asosiy view'ga murojaat
+            "Joylashuvingizni aniqlash uchun ruxsat bering",
+            Snackbar.LENGTH_LONG
+        ).setAction("Sozlash") {
+            val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            startActivity(intent)
+        }.show()
+    }
+
+
 
     companion object {
         private const val REQUEST_LOCATION_PERMISSION = 100
@@ -922,7 +991,28 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     override fun onDestroy() {
         super.onDestroy()
-        handler.removeCallbacks(runnable)
+        if (::runnable.isInitialized) {
+            runnable.run()
+            handler.removeCallbacks(runnable)
+        }
+    }
+    override fun onBackPressed() {
+        if (!doubleBackPressed) {
+            Toast.makeText(this, "Chiqish uchun ikki marta bosing", Toast.LENGTH_SHORT).show()
+            doubleBackPressed = true
+            Thread{
+                Thread.sleep(2000)
+                doubleBackPressed = false
+            }.start()
+        } else {
+            finishAffinity()
+            super.onBackPressed()
+        }
+    }
+
+    override fun onResume() {
+        binding.bottomNavigation.selectedItemId = R.id.nav_home
+        super.onResume()
     }
 }
 

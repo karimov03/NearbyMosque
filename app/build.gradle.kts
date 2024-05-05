@@ -41,6 +41,7 @@ dependencies {
     implementation ("com.google.android.gms:play-services-maps:18.2.0")
     implementation ("androidx.swiperefreshlayout:swiperefreshlayout:1.2.0-alpha01")
     implementation ("pl.droidsonroids.gif:android-gif-drawable:1.2.23")
+    implementation ("androidx.core:core-ktx:1.7.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

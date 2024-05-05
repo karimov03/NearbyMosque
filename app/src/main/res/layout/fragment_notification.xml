@@ -8,4 +8,26 @@
     tools:context=".Fragments.NotificationFragment">
 
 
+    <WebView
+        android:id="@+id/web_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="-195dp"
+        android:layout_marginBottom="-286dp" />
+
+    <LinearLayout
+        android:id="@+id/gifImageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/white"
+        >
+
+        <pl.droidsonroids.gif.GifImageView
+            android:src="@drawable/image_gif"
+            android:layout_width="wrap_content"
+            android:layout_margin="100dp"
+            android:layout_gravity="center"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
 </FrameLayout>
